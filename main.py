@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*import
 
 import os
+from pytube import exceptions
 from pytube import YouTube
 from pytube import Playlist
 from option import Options
@@ -23,44 +24,51 @@ def change_directory(folder=None):
 def verify_link(link, link_type):
     try:
         if link_type in ["v", "m"]:
-            yt = YouTube(link)
-            return yt
-        pl = Playlist(link)
-        return pl
-    except:
-        print()
+            YouTube(link)
+        else:
+            Playlist(link)
+    except exceptions.RegexMatchError:
+        print("Проверьте корректность ссылки и попытайтесь снова")
+        return None
+    else:
+        if link_type in ["v", "m"]:
+            return YouTube(link)
+        return Playlist(link)
 
 
 def download_video(link):
     yt = verify_link(link, "v")
-    st = yt.streams.get_highest_resolution()
-    st.download()
+    if yt:
+        st = yt.streams.get_highest_resolution()
+        st.download()
 
 
 def download_music(link):
     yt = verify_link(link, "m")
-    st = yt.streams.get_audio_only()
-    st.download()
+    if yt:
+        st = yt.streams.get_audio_only()
+        st.download()
 
 
 def download_playlist(link):
     pl = verify_link(link, "p")
-    pl_name = pl.title
-    change_directory(pl_name)
-    pl_type = input("Если хотите скачать только аудио введите 'm'\n"
-                    "иначе просто нажмите Enter: ")
-    if pl_type.lower() == "m":
-        for count, video in enumerate(pl.videos):
-            os.system("cls")
-            print(f"Загрузка {count + 1} из {len(pl.videos)}")
-            st = video.streams.get_audio_only()
-            st.download()
-    else:
-        for count, video in enumerate(pl.videos):
-            os.system("cls")
-            print(f"Загрузка {count + 1} из {len(pl.videos)}")
-            st = video.streams.get_highest_resolution()
-            st.download()
+    if pl:
+        pl_name = pl.title
+        change_directory(pl_name)
+        pl_type = input("Если хотите скачать только аудио введите 'm'\n"
+                        "иначе просто нажмите Enter: ")
+        if pl_type.lower() == "m":
+            for count, video in enumerate(pl.videos):
+                os.system("cls")
+                print(f"Загрузка {count + 1} из {len(pl.videos)}")
+                st = video.streams.get_audio_only()
+                st.download()
+        else:
+            for count, video in enumerate(pl.videos):
+                os.system("cls")
+                print(f"Загрузка {count + 1} из {len(pl.videos)}")
+                st = video.streams.get_highest_resolution()
+                st.download()
 
 
 def download_base(link, download_type):
@@ -74,7 +82,9 @@ def download_base(link, download_type):
 
 def user_guide():
     os.system("cls")
-    print()
+    print("""При запуске программы на рабочем столе автоматически создается папка YoutubeDownload
+куда и будут скачиваться все файлы. Также для каждого типа файлов создается отдельная 
+папка в директории YoutubeDownload.""")
 
 
 def main():
@@ -96,7 +106,7 @@ def main():
                 new_type = input("m - music, v - video, p - playlist\n> ")
             current_type = Options(new_type)
         elif link == "h":
-            pass
+            user_guide()
         elif link.startswith("https://www.youtube.com"):
             download_base(link, current_type.download_type)
 
