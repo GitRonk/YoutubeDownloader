@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*import
 
 import os
+import requests
 from pytube import exceptions
 from pytube import YouTube
 from pytube import Playlist
@@ -56,16 +57,27 @@ def download_playlist(link, download_type):
 
 
 def download_base(link, download_type):
-    if download_type == "video":
-        yt = verify_link(link, "v")
-        if yt:
+    yt = verify_link(link, "v")
+    if yt:
+        if download_type == "video":
             st = yt.streams.get_highest_resolution()
             st.download()
-    else:
-        yt = verify_link(link, "m")
-        if yt:
+        else:
             st = yt.streams.get_audio_only()
             st.download()
+
+
+def check_connect():
+    try:
+        requests.get("https://www.youtube.com")
+    except requests.exceptions.ConnectionError:
+        os.system("cls")
+        print("Не возможно подключиться к 'youtube.com' "
+              "пожалуйста проверьте интернет соединение и повторите попытку!")
+        input("Нажмите Enter чтобы продолжить")
+        return False
+    else:
+        return True
 
 
 def user_guide():
@@ -96,6 +108,9 @@ def main():
         elif link == "h":
             user_guide()
         elif link.startswith("https://www.youtube.com"):
+            connect = check_connect()
+            if not connect:
+                continue
             if "playlist" in link:
                 change_directory(Options.get_path() + "\\" + "playlist")
                 download_playlist(link, current_type.download_type)
