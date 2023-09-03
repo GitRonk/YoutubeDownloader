@@ -50,14 +50,12 @@ def download_music(link):
         st.download()
 
 
-def download_playlist(link):
+def download_playlist(link, download_type):
     pl = verify_link(link, "p")
     if pl:
         pl_name = pl.title
         change_directory(pl_name)
-        pl_type = input("Если хотите скачать только аудио введите 'm'\n"
-                        "иначе просто нажмите Enter: ")
-        if pl_type.lower() == "m":
+        if download_type == "music":
             for count, video in enumerate(pl.videos):
                 os.system("cls")
                 print(f"Загрузка {count + 1} из {len(pl.videos)}")
@@ -76,8 +74,6 @@ def download_base(link, download_type):
         download_video(link)
     elif download_type == "music":
         download_music(link)
-    else:
-        download_playlist(link)
 
 
 def user_guide():
@@ -102,13 +98,19 @@ def main():
 
         if link == "t":
             new_type = ""
-            while new_type not in ["m", "v", "p"]:
-                new_type = input("m - music, v - video, p - playlist\n> ")
+            while new_type not in ["m", "v"]:
+                new_type = input("m - music, v - video\n> ")
             current_type = Options(new_type)
         elif link == "h":
             user_guide()
         elif link.startswith("https://www.youtube.com"):
-            download_base(link, current_type.download_type)
+            if "playlist" in link:
+                change_directory(Options.get_path() + "\\" + "playlist")
+                download_playlist(link, current_type.download_type)
+            else:
+                download_base(link, current_type.download_type)
+        else:
+            print("Не известная команда!")
 
 
 if __name__ == '__main__':
