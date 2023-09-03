@@ -36,20 +36,6 @@ def verify_link(link, link_type):
         return Playlist(link)
 
 
-def download_video(link):
-    yt = verify_link(link, "v")
-    if yt:
-        st = yt.streams.get_highest_resolution()
-        st.download()
-
-
-def download_music(link):
-    yt = verify_link(link, "m")
-    if yt:
-        st = yt.streams.get_audio_only()
-        st.download()
-
-
 def download_playlist(link, download_type):
     pl = verify_link(link, "p")
     if pl:
@@ -71,9 +57,15 @@ def download_playlist(link, download_type):
 
 def download_base(link, download_type):
     if download_type == "video":
-        download_video(link)
-    elif download_type == "music":
-        download_music(link)
+        yt = verify_link(link, "v")
+        if yt:
+            st = yt.streams.get_highest_resolution()
+            st.download()
+    else:
+        yt = verify_link(link, "m")
+        if yt:
+            st = yt.streams.get_audio_only()
+            st.download()
 
 
 def user_guide():
