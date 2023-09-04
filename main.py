@@ -6,6 +6,7 @@ from pytube import exceptions
 from pytube import YouTube
 from pytube import Playlist
 from option import Options
+from help import Help
 
 
 def create_folder(folder_name):
@@ -59,6 +60,7 @@ def download_playlist(link, download_type):
 def download_base(link, download_type):
     yt = verify_link(link, "v")
     if yt:
+        print("Загрузка...")
         if download_type == "video":
             st = yt.streams.get_highest_resolution()
             st.download()
@@ -80,13 +82,6 @@ def check_connect():
         return True
 
 
-def user_guide():
-    os.system("cls")
-    print("""При запуске программы на рабочем столе автоматически создается папка YoutubeDownload
-куда и будут скачиваться все файлы. Также для каждого типа файлов создается отдельная 
-папка в директории YoutubeDownload.""")
-
-
 def main():
     change_directory()
     current_type = Options("v")
@@ -102,11 +97,11 @@ def main():
 
         if link == "t":
             new_type = ""
-            while new_type not in ["m", "v"]:
-                new_type = input("m - music, v - video\n> ")
+            while new_type not in ["a", "v"]:
+                new_type = input("a - audio, v - video\n> ")
             current_type = Options(new_type)
         elif link == "h":
-            user_guide()
+            Help.user_guide()
         elif link.startswith("https://www.youtube.com"):
             connect = check_connect()
             if not connect:
