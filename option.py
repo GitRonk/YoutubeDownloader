@@ -11,7 +11,7 @@ class Options:
 
     def __init__(self, download_type):
         self.cuts = {"v": "video",
-                     "m": "music"}
+                     "a": "audio"}
         self._download_type = self.cuts[download_type]
         self._current_directory = __class__.get_path() + "\\" + self.cuts[download_type]
 
