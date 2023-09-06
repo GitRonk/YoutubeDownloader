@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*import
 
 import os
+import logging
+import urllib.error
+
 import requests
 from pytube import exceptions
 from pytube import YouTube
@@ -23,23 +26,31 @@ def change_directory(folder=None):
     os.chdir(folder)
 
 
-def verify_link(link, link_type):
+def download_base(link, download_type):
     try:
-        if link_type in ["v", "m"]:
-            YouTube(link)
-        else:
-            Playlist(link)
+        if "playlist" in link:
+            download_playlist(link, download_type)
+        elif download_type == "video":
+            yt = YouTube(link)
+            st = yt.streams.get_highest_resolution()
+            st.download()
+        elif download_type == "audio":
+            yt = YouTube(link)
+            st = yt.streams.get_audio_only()
+            st.download()
     except exceptions.RegexMatchError:
         print("Проверьте корректность ссылки и попытайтесь снова")
-        return None
-    else:
-        if link_type in ["v", "m"]:
-            return YouTube(link)
-        return Playlist(link)
+        logging.info(f"Link Except: link - {link}")
+
+    except urllib.error.URLError:
+        print("Не возможно соединиться с 'www.youtube.com' пожалуйста проверьте интернет соединение!")
+        try_connect = check_connect()
+        logging.info(f"URLError: connect - {try_connect}")
 
 
 def download_playlist(link, download_type):
-    pl = verify_link(link, "p")
+    change_directory(Options.get_path() + "\\" + "playlist")
+    pl = Playlist(link)
     if pl:
         pl_name = pl.title
         change_directory(pl_name)
@@ -57,32 +68,18 @@ def download_playlist(link, download_type):
                 st.download()
 
 
-def download_base(link, download_type):
-    yt = verify_link(link, "v")
-    if yt:
-        print("Загрузка...")
-        if download_type == "video":
-            st = yt.streams.get_highest_resolution()
-            st.download()
-        else:
-            st = yt.streams.get_audio_only()
-            st.download()
-
-
 def check_connect():
     try:
         requests.get("https://www.youtube.com")
     except requests.exceptions.ConnectionError:
-        os.system("cls")
-        print("Не возможно подключиться к 'youtube.com' "
-              "пожалуйста проверьте интернет соединение и повторите попытку!")
-        input("Нажмите Enter чтобы продолжить")
         return False
     else:
         return True
 
 
 def main():
+    lod_directory = os.path.join(Options.get_path(), "py_log.log")
+    logging.basicConfig(filename=lod_directory, format="%(asctime)s %(levelname)s %(message)s")
     change_directory()
     current_type = Options("v")
 
@@ -100,20 +97,25 @@ def main():
             while new_type not in ["a", "v"]:
                 new_type = input("a - audio, v - video\n> ")
             current_type = Options(new_type)
+
         elif link == "h":
             Help.user_guide()
+
         elif link.startswith("https://www.youtube.com"):
-            connect = check_connect()
-            if not connect:
-                continue
-            if "playlist" in link:
-                change_directory(Options.get_path() + "\\" + "playlist")
-                download_playlist(link, current_type.download_type)
-            else:
-                download_base(link, current_type.download_type)
+            download_base(link, current_type.download_type)
+
         else:
             print("Не известная команда!")
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception:
+        os.system("cls")
+        print("Произошла не известная ошибка! Сведения об ошибке записаны в лог-файл. "
+              "Пожалуйста отправьте лог-файл разработчику!")
+        connect = check_connect()
+        logging.critical(f"Critical Error: connect-{connect}", exc_info=True)
+        input("Нажмите Enter для закрытия программы...")
+
