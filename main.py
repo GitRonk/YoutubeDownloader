@@ -33,10 +33,12 @@ def download_base(link, download_type):
         elif download_type == "video":
             yt = YouTube(link)
             st = yt.streams.get_highest_resolution()
+            print("Загрузка...")
             st.download()
         elif download_type == "audio":
             yt = YouTube(link)
             st = yt.streams.get_audio_only()
+            print("Загрузка...")
             st.download()
     except exceptions.RegexMatchError:
         print("Проверьте корректность ссылки и попытайтесь снова")
@@ -78,9 +80,9 @@ def check_connect():
 
 
 def main():
+    change_directory()
     lod_directory = os.path.join(Options.get_path(), "py_log.log")
     logging.basicConfig(filename=lod_directory, format="%(asctime)s %(levelname)s %(message)s")
-    change_directory()
     current_type = Options("v")
 
     while True:
