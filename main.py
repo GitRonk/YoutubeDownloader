@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*import
 
 import os
+import sys
+import time
 import logging
 import urllib.error
 
@@ -10,6 +12,19 @@ from pytube import YouTube
 from pytube import Playlist
 from option import Options
 from help import Help
+
+
+file_size = 0
+
+
+def progress_function(chunk, file_handle, bytes_remaining):
+    global file_size
+    current = ((file_size - bytes_remaining)/file_size)
+    percent = f"{round(current*100, 1)}"
+    progress = int(50*current)
+    status = '█' * progress + '-' * (50 - progress)
+    sys.stdout.write(f' ↳ |{status}| {percent}%\r')
+    sys.stdout.flush()
 
 
 def create_folder(folder_name):
@@ -26,20 +41,25 @@ def change_directory(folder=None):
     os.chdir(folder)
 
 
-def download_base(link, download_type):
+def downloader(link, download_type):
+    global file_size
     try:
+        yt = YouTube(link, on_progress_callback=progress_function)
         if "playlist" in link:
             download_playlist(link, download_type)
         elif download_type == "video":
-            yt = YouTube(link)
             st = yt.streams.get_highest_resolution()
+            file_size = st.filesize
             print("Загрузка...")
             st.download()
+            print("\nЗагрузка завершена")
+            time.sleep(1)
         elif download_type == "audio":
-            yt = YouTube(link)
             st = yt.streams.get_audio_only()
-            print("Загрузка...")
+            file_size = st.filesize
             st.download()
+            print("\nЗагрузка завершена")
+            time.sleep(1)
     except exceptions.RegexMatchError:
         print("Проверьте корректность ссылки и попытайтесь снова")
         logging.info(f"Link Except: link - {link}")
@@ -51,23 +71,27 @@ def download_base(link, download_type):
 
 
 def download_playlist(link, download_type):
+    global file_size
     change_directory(Options.get_path() + "\\" + "playlist")
     pl = Playlist(link)
     if pl:
         pl_name = pl.title
         change_directory(pl_name)
         if download_type == "music":
-            for count, video in enumerate(pl.videos):
-                os.system("cls")
-                print(f"Загрузка {count + 1} из {len(pl.videos)}")
-                st = video.streams.get_audio_only()
+            for count, url in enumerate(pl.video_urls):
+                print(f"\nЗагрузка {count + 1} из {len(pl.videos)}\n")
+                yt = YouTube(url, on_progress_callback=progress_function)
+                st = yt.streams.get_audio_only()
+                file_size = st.filesize
                 st.download()
         else:
-            for count, video in enumerate(pl.videos):
-                os.system("cls")
-                print(f"Загрузка {count + 1} из {len(pl.videos)}")
-                st = video.streams.get_highest_resolution()
+            for count, url in enumerate(pl.video_urls):
+                print(f"\nЗагрузка {count + 1} из {len(pl.videos)}\n")
+                yt = YouTube(url, on_progress_callback=progress_function)
+                st = yt.streams.get_highest_resolution()
+                file_size = st.filesize
                 st.download()
+    input("\nPress Enter to continue")
 
 
 def check_connect():
@@ -104,7 +128,10 @@ def main():
             Help.user_guide()
 
         elif link.startswith("https://www.youtube.com"):
-            download_base(link, current_type.download_type)
+            if "playlist" in link:
+                download_playlist(link, current_type.download_type)
+            else:
+                downloader(link, current_type.download_type)
 
         else:
             print("Не известная команда!")
