@@ -42,6 +42,7 @@ def change_directory(folder=None):
 
 
 def downloader(link, download_type):
+    logging.info("[+] Function downloader was called...\n")
     global file_size
     try:
         yt = YouTube(link, on_progress_callback=progress_function)
@@ -71,6 +72,7 @@ def downloader(link, download_type):
 
 
 def download_playlist(link, download_type):
+    logging.info("[+] Function download_playlist was called...\n")
     global file_size
     change_directory(Options.get_path() + "\\" + "playlist")
     pl = Playlist(link)
@@ -91,7 +93,8 @@ def download_playlist(link, download_type):
                 st = yt.streams.get_highest_resolution()
                 file_size = st.filesize
                 st.download()
-    input("\nPress Enter to continue")
+    print("\nЗагрузка завершена")
+    time.sleep(1)
 
 
 def check_connect():
@@ -106,7 +109,7 @@ def check_connect():
 def main():
     change_directory()
     lod_directory = os.path.join(Options.get_path(), "py_log.log")
-    logging.basicConfig(filename=lod_directory, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(filename=lod_directory, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     current_type = Options("v")
 
     while True:
@@ -116,7 +119,7 @@ def main():
         print(f"Текущий тип скачиваемого файла '{current_type.download_type.upper()}'")
         print("Список доступных команд\n"
               "t - смена типа скачиваемого файла, h - руководство")
-        link = input("Введите ссылку или название команды:> ")
+        link = input("Введите ссылку или название команды:> ").strip()
 
         if link == "t":
             new_type = ""
@@ -128,13 +131,16 @@ def main():
             Help.user_guide()
 
         elif link.startswith("https://www.youtube.com"):
+            logging.info(link)
             if "playlist" in link:
                 download_playlist(link, current_type.download_type)
             else:
                 downloader(link, current_type.download_type)
 
         else:
+            logging.info(f"[-] Unknown link - {link}\n")
             print("Не известная команда!")
+            time.sleep(1)
 
 
 if __name__ == '__main__':
